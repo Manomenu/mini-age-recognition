@@ -2,15 +2,34 @@ import os
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
+import face_recognition
+import cv2
 
 def load_image(image_label):
     file_path = filedialog.askopenfilename()
 
     if file_path:
-        image = Image.open(file_path)  # Open the selected image file
-        image = ImageTk.PhotoImage(image)  # Convert the image to Tkinter PhotoImage format
-        image_label.config(image=image)  # Set the image to the label
-        image_label.image = image  # Keep a reference to the image to prevent it from being garbage collected
+        #image = Image.open(file_path)  # Open the selected image file
+        #image = ImageTk.PhotoImage(image)  # Convert the image to Tkinter PhotoImage format
+
+        elo = face_recognition.load_image_file(file_path)
+        face_locations = face_recognition.face_locations(elo)
+
+        if face_locations:
+            for face_location in face_locations:
+                top, right, bottom, left = face_location 
+                face_image = elo[:, :]
+                padding = 0
+                cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
+
+            #padding = 0
+            #cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
+
+            pil_image = Image.fromarray(face_image) # Convert NumPy array to PIL Image
+            tk_image = ImageTk.PhotoImage(pil_image)  # Convert PIL Image to Tkinter PhotoImage
+
+            image_label.config(image=tk_image)  # Set the image to the label
+            image_label.image = tk_image 
     return 
 
 
