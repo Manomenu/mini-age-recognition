@@ -5,7 +5,7 @@ from PIL import Image, ImageTk
 import face_recognition
 import cv2
 
-def load_image(image_label):
+def load_image(image_label, window):
     file_path = filedialog.askopenfilename()
 
     if file_path:
@@ -25,11 +25,16 @@ def load_image(image_label):
             #padding = 0
             #cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
 
-            pil_image = Image.fromarray(face_image) # Convert NumPy array to PIL Image
-            tk_image = ImageTk.PhotoImage(pil_image)  # Convert PIL Image to Tkinter PhotoImage
+        max_width = window.winfo_width()
+        max_height = window.winfo_height()
 
-            image_label.config(image=tk_image)  # Set the image to the label
-            image_label.image = tk_image 
+        pil_image = Image.fromarray(face_image) # Convert NumPy array to PIL Image
+
+        pil_image.thumbnail((max_width, max_height), Image.LANCZOS)
+        tk_image = ImageTk.PhotoImage(pil_image)  # Convert PIL Image to Tkinter PhotoImage
+
+        image_label.config(image=tk_image)  # Set the image to the label
+        image_label.image = tk_image 
     return 
 
 
