@@ -103,11 +103,11 @@ def open_camera(image_label, vid, frame_count):
             image_label.photo_image = photo_image
             image_label.configure(image=photo_image)
         else:
-            if last_face_locations:
-                # Draw rectangles around the last detected faces
-                for face_location in last_face_locations:
-                    top, right, bottom, left = face_location
-                    cv2.rectangle(frame, (left, top), (right, bottom), (255, 0, 0), 2)
+            # if last_face_locations:
+            #     
+            #     for face_location in last_face_locations:
+            #         top, right, bottom, left = face_location
+            #         cv2.rectangle(frame, (left, top), (right, bottom), (255, 0, 0), 2)
 
             # Convert the frame to a PIL Image
             pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
