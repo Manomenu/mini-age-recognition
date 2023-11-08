@@ -73,3 +73,54 @@ def load_folder(canvas_frame):
             frame.update_idletasks()  # Update the frame to calculate the proper scroll region
 
             canvas.config(scrollregion=canvas.bbox("all"))
+
+
+
+def open_camera(image_label, vid, frame_count):
+    global last_face_locations
+
+    _, frame = vid.read()
+
+    if frame is not None:
+        if frame_count % 5 == 0:
+            # Convert image from one color space to another
+            opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            # Detect faces in the frame
+            face_locations = face_recognition.face_locations(opencv_image)
+
+            if face_locations:
+                # Update last_face_locations with the current face locations
+                last_face_locations = face_locations
+
+            # Convert the frame to a PIL Image
+            pil_image = Image.fromarray(opencv_image)
+
+            # Convert PIL Image to Tkinter PhotoImage
+            photo_image = ImageTk.PhotoImage(image=pil_image)
+
+            # Display the photo image in the label
+            image_label.photo_image = photo_image
+            image_label.configure(image=photo_image)
+        else:
+            if last_face_locations:
+                # Draw rectangles around the last detected faces
+                for face_location in last_face_locations:
+                    top, right, bottom, left = face_location
+                    cv2.rectangle(frame, (left, top), (right, bottom), (255, 0, 0), 2)
+
+            # Convert the frame to a PIL Image
+            pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+
+            # Convert PIL Image to Tkinter PhotoImage
+            photo_image = ImageTk.PhotoImage(image=pil_image)
+
+            # Display the photo image in the label
+            image_label.photo_image = photo_image
+            image_label.configure(image=photo_image)
+
+    # Repeat the same process after a delay (10 milliseconds in this case)
+    image_label.after(10, lambda: open_camera(image_label, vid, frame_count + 1))
+
+
+#https://www.geeksforgeeks.org/how-to-show-webcam-in-tkinter-window-python/
