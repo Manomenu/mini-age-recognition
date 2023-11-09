@@ -105,6 +105,6 @@ def open_camera(image_label, vid):
 
     # Repeat the same process after a delay (10 milliseconds in this case)
     image_label.after(10, lambda: open_camera(image_label, vid))
-
+# sdadadasdasdasdas
 
 #https://www.geeksforgeeks.org/how-to-show-webcam-in-tkinter-window-python/
