@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
-from image_utils import load_image, load_folder, open_camera
+from image_utils import load_image, load_folder, open_camera, open_camera2
 import cv2
 
 def exit_program():
@@ -30,7 +30,7 @@ canvas_frame.pack(fill=tk.BOTH, expand=True)
 file_menu = tk.Menu(menu_bar, tearoff=0)
 file_menu.add_command(label="Image", command=lambda: load_image(image_label, window))
 file_menu.add_command(label="Folder", command=lambda: load_folder(canvas_frame))
-file_menu.add_command(label="Camera", command=lambda:open_camera(image_label,vid))
+file_menu.add_command(label="Camera", command=lambda:open_camera2(image_label,vid))
 menu_bar.add_cascade(label="Menu", menu=file_menu)
 
 menu_bar.add_command(label="Exit", command=exit_program)

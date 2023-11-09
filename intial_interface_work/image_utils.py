@@ -13,21 +13,21 @@ def load_image(image_label, window):
         #image = ImageTk.PhotoImage(image)  # Convert the image to Tkinter PhotoImage format
 
         elo = face_recognition.load_image_file(file_path)
-        face_locations = face_recognition.face_locations(elo)
+        # face_locations = face_recognition.face_locations(elo)
 
-        if face_locations:
-            for face_location in face_locations:
-                top, right, bottom, left = face_location 
-                face_image = elo[:, :]
-                padding = 0
-                cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
-
+        # if face_locations:
+        #     for face_location in face_locations:
+        #         top, right, bottom, left = face_location 
+        #         face_image = elo[:, :]
+        #         padding = 0
+        #         cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
+       
             #padding = 0
             #cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
 
         max_width = window.winfo_width()
         max_height = window.winfo_height()
-
+        face_image=face_recognition(elo);
         pil_image = Image.fromarray(face_image) # Convert NumPy array to PIL Image
 
         pil_image.thumbnail((max_width, max_height), Image.LANCZOS)
@@ -81,30 +81,99 @@ def open_camera(image_label, vid):
     _, frame = vid.read()
 
     if frame is not None:
-        # Convert image from one color space to another
+        
         opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+      
+        # funkcja 
+    #   opencv_image=facedetecting(opencv_image);
+    pil_image = Image.fromarray(opencv_image)
 
-        # Detect faces in the frame
-        face_locations = face_recognition.face_locations(opencv_image)
-
-        if face_locations:
-            for face_location in face_locations:
-                top, right, bottom, left = face_location
-                # Draw rectangles around the detected faces
-                cv2.rectangle(opencv_image, (left, top), (right, bottom), (255, 0, 0), 2)
-
-        # Convert the frame to a PIL Image
-        pil_image = Image.fromarray(opencv_image)
-
-        # Convert PIL Image to Tkinter PhotoImage
-        photo_image = ImageTk.PhotoImage(image=pil_image)
-
+        
+    photo_image = ImageTk.PhotoImage(image=pil_image)
         # Display the photo image in the label
-        image_label.photo_image = photo_image
-        image_label.configure(image=photo_image)
+    image_label.photo_image = photo_image
+    image_label.configure(image=photo_image)
 
     # Repeat the same process after a delay (10 milliseconds in this case)
     image_label.after(10, lambda: open_camera(image_label, vid))
-# sdadadasdasdasdas
+# 
 
 #https://www.geeksforgeeks.org/how-to-show-webcam-in-tkinter-window-python/
+
+def facedetecting(opencv_image):
+    face_locations = face_recognition.face_locations(opencv_image)
+
+    if face_locations:
+         for face_location in face_locations:
+              top, right, bottom, left = face_location
+              # Draw rectangles around the detected faces
+              cv2.rectangle(opencv_image, (left, top), (right, bottom), (255, 0, 0), 2)
+
+        # Convert the frame to a PIL Image
+   
+    return opencv_image;
+
+
+
+
+def open_camera2(image_label, vid):
+    # Initialize some variables
+    
+    face_locations = []
+    process_this_frame = True
+
+    # Function to update the frame in the Tkinter label
+    def update_frame():
+        nonlocal process_this_frame, face_locations;
+        # Grab a single frame of video
+        ret, frame = vid.read()
+
+        if not ret:
+            print("Failed to grab frame")
+            image_label.after(10, update_frame)
+            return
+
+        # Only process every other frame of video to save time
+        if process_this_frame:
+            # Resize frame for faster processing
+            small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+            # Convert BGR to RGB
+            rgb_small_frame = small_frame[:, :, ::-1]
+
+            # Find all the faces and face encodings
+            face_locations = face_recognition.face_locations(rgb_small_frame)
+            
+
+            
+            
+
+        process_this_frame = not process_this_frame
+
+        # Display the results
+        for (top, right, bottom, left) in face_locations:
+            top *= 4
+            right *= 4
+            bottom *= 4
+            left *= 4
+
+            # Draw a box around the face
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+            # Draw a label with a name below the face
+            font = cv2.FONT_HERSHEY_DUPLEX
+            name="HANDSOME GAY"
+            cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+            cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
+            
+
+       
+        pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        photo_image = ImageTk.PhotoImage(pil_image)
+
+        # Update the image_label with the new image
+        image_label.photo_image = photo_image
+        image_label.configure(image=photo_image)
+
+        # Repeat after an interval to capture the next frame
+        image_label.after(10, update_frame)
+
+    update_frame()
