@@ -54,5 +54,5 @@ class data_importer:
         tar.close()
 
         # Create a DataFrame from image data and age info
-        df = pd.DataFrame({'Image': image_data, 'Age': ages})
+        df = pd.DataFrame({'Images': image_data, 'Age': ages})
         return df
