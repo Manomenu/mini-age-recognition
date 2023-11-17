@@ -11,7 +11,7 @@ def load_image(image_label, window):
 
     if file_path:
         #image = Image.open(file_path)  # Open the selected image file
-        #image = ImageTk.PhotoImage(image)  # Convert the image to Tkinter PhotoImage format
+        
 
         elo = face_recognition.load_image_file(file_path)
         face_locations = face_recognition.face_locations(elo)

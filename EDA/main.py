@@ -52,7 +52,7 @@ plt.xlabel('Ages')
 plt.ylabel('Frequency')
 plt.show()
 
-
+# twoja stara
 # age_counts = count_images_per_age(df_images)
 # plt.figure(figsize=(10, 6))
 # age_counts.plot(kind='bar')
