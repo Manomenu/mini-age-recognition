@@ -6,53 +6,70 @@
 
 
 
-import tarfile
+import zipfile
 from PIL import Image
 import io
 import pandas as pd
 import numpy as np
 import re
 
-def retrieve_first_number(string):
-    match = re.search(r'\d+', string)
-    if match:
-        return int(match.group())
-    else:
-        return None
+
 
 class data_importer:
     @classmethod
     def import_images(cls):
-        file_path = '../crop_part1.tar.gz'
-        # Open the tar.gz file
-        tar = tarfile.open(file_path, 'r:gz')
+        file_path = '../crop_full.zip'
+        print(file_path)
 
-        # Lists to store data
-        image_data = []
-        ages = []
+        # Otwórz plik ZIP
+        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            # Lista plików w archiwum ZIP
+            file_list = zip_ref.namelist()
 
-        # Regular expression pattern to extract age from file names
-        pattern = re.compile(r'(\d+)_')
+           
+            image_data = []
+            ages = []
+            genders = []  
+            ethnicities = []  
 
-        # Iterate through the files in the tar archive
-        for member in tar.getmembers():
-            if member.name.endswith('.jpg'):
-                # Extract image bytes from the tar archive
-                file = tar.extractfile(member)
-                if file is not None:
-                    # Read image bytes into PIL Image
-                    img_data = file.read()
-                    img = Image.open(io.BytesIO(img_data))
-                    # Convert image to numpy array
-                    img_array = np.array(img)
-                    # Append image array to the list
-                    image_data.append(img_array)
-                    age = retrieve_first_number(member.name.split('/')[1])
-                    ages.append(age)
+            
+            for file_name in file_list:
+                if file_name.endswith('.jpg'):
+                    # otworz plik
+                    with zip_ref.open(file_name) as file:
+                        # analiza pliku
+                        img_data = file.read()
+                        img = Image.open(io.BytesIO(img_data))
+                        img_array = np.array(img)
+                        image_data.append(img_array)
 
-        # Close the tar file
-        tar.close()
+                      # Wyodrębnij wiek, płeć i etniczność z nazwy pliku
+                        info = cls.extract_info_from_filename(file_name)
+                        if info is not None and len(info) == 3:  # Sprawdź, czy info ma oczekiwaną długość
+                            age, gender, ethnicity = info
+                            ages.append(age)
+                            genders.append(gender)
+                            ethnicities.append(ethnicity)
+                        else:
+                            print(f"Problem with file: {file_name}. Skipping...")
 
-        # Create a DataFrame from image data and age info
-        df = pd.DataFrame({'Images': image_data, 'Age': ages})
+        #  tworzenie data frame
+        df = pd.DataFrame({'Images': image_data, 'Age': ages, 'Gender': genders, 'Race': ethnicities})
+        
+        
         return df
+    @staticmethod
+    def extract_info_from_filename(file_name):
+        # Use regular expressions to extract age, gender, and race from the file name
+        pattern = re.compile(r'(\d+)_(\d)_(\d)_(\d+)')
+        match = pattern.search(file_name)
+
+        if match:
+            age = int(match.group(1))
+            gender = int(match.group(2))
+            race = int(match.group(3))
+            # date_time = match.group(4)  # If you need date&time as well
+
+            return age, gender, race
+        else:
+            return None
