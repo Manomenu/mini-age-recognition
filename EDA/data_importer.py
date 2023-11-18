@@ -1,6 +1,6 @@
 # USER INFO:
-# https://drive.google.com/drive/folders/0BxYys69jI14kU0I1YUQyY1ZDRUE?resourcekey=0-01Pth1hq20K4kuGVkp3oBw
-# wybierz plik crop_part1 i go pobierz
+# https://drive.google.com/drive/folders/1dlFBXBvmKCYf8FNtbeW58NpGZPufBTYy
+# wybierz plik crop_full i go pobierz
 # wwal do go main folderu projektu i powinno byc git, patrz tylko czy do nazwy pliku nie dodalo sie np. (1) na koncu
 
 
