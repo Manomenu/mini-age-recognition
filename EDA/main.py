@@ -93,8 +93,7 @@ plt.show()
 # plt.title('Distribution of Images per Age')
 # plt.xlabel('Age')
 # plt.ylabel('Count')
-# plt.show()
-#
+
 # plt.figure(figsize=(8, 8))
 # age_counts.plot(kind='pie', autopct='%1.1f%%')
 # plt.title('Distribution of Images per Age')
