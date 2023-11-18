@@ -6,6 +6,7 @@ from data_importer import data_importer
 import matplotlib.pylab as plt
 import seaborn as sns
 import numpy as np
+import math
 
 plt.style.use('ggplot')
 
@@ -53,6 +54,7 @@ def display_random_images(dataframe):
 # rozmiar danych
 print(df_images.shape)
 print(df_images.info())
+print(df_images.tail(10));
 # show images
 display_random_images(df_images)
 
@@ -86,6 +88,50 @@ plt.legend(title='Race')
 plt.show()
 
 
+
+plt.figure(figsize=(10, 6))
+plt.hist(df_images['Size'], bins=20, edgecolor='black')
+plt.title('Histogram of Size Distribution')
+plt.xlabel('Size in KB')
+plt.ylabel('Frequency')
+plt.show()
+
+
+age_group = df_images.groupby('Age')['Size'].mean()
+
+# Tworzenie wykresu
+plt.figure(figsize=(10, 6))
+plt.bar(age_group.index, age_group.values, edgecolor='black')
+plt.title('Histogram of Average Image Size by Age')
+plt.xlabel('Age')
+plt.ylabel('Average Image Size in KB')
+plt.xticks(np.arange(0, 101, 5))  # Ustawienie podziałek osi X co 10 lat
+plt.grid(axis='y')
+plt.show()
+
+
+age_group_images = df_images.groupby('Age')['Images'].apply(lambda x: np.mean(np.array(list(x)), axis=0))
+n = len(age_group_images)  
+
+
+rows = cols = math.ceil(math.sqrt(n))
+
+
+fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 4))
+
+for i, (age, image) in enumerate(age_group_images.items()):
+   
+    row = i // cols
+    col = i % cols
+    ax = axs[row, col] if n > 1 else axs
+    ax.imshow(image.astype('uint8'))
+    ax.set_title(f'Wiek {age}')
+    ax.axis('off')
+
+for i in range(n, rows*cols):
+    axs.flat[i].axis('off')
+
+plt.show()
 
 # age_counts = count_images_per_age(df_images)
 # plt.figure(figsize=(10, 6))

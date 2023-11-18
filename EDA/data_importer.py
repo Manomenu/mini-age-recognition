@@ -31,8 +31,8 @@ class data_importer:
             ages = []
             genders = []  
             ethnicities = []  
-
-            
+            file_sizes = []  #size of file
+            i = 0
             for file_name in file_list:
                 if file_name.endswith('.jpg'):
                     # otworz plik
@@ -42,7 +42,11 @@ class data_importer:
                         img = Image.open(io.BytesIO(img_data))
                         img_array = np.array(img)
                         image_data.append(img_array)
-
+                        
+                        file_size_kb = len(img_data) / 1024  # Przeliczanie na kilobajty
+                        file_sizes.append(file_size_kb)
+                        if(i == 0):
+                           i=i
                       # Wyodrębnij wiek, płeć i etniczność z nazwy pliku
                         info = cls.extract_info_from_filename(file_name)
                         if info is not None and len(info) == 3:  # Sprawdź, czy info ma oczekiwaną długość
@@ -54,7 +58,7 @@ class data_importer:
                             print(f"Problem with file: {file_name}. Skipping...")
 
         #  tworzenie data frame
-        df = pd.DataFrame({'Images': image_data, 'Age': ages, 'Gender': genders, 'Race': ethnicities})
+        df = pd.DataFrame({'Images': image_data, 'Age': ages, 'Gender': genders, 'Race': ethnicities,'Size':file_sizes})
         
         
         return df
