@@ -31,7 +31,7 @@ def count_image_per_gender(dataframe):
     return gender_counts
 
 
-def display_random_images(dataframe):
+# def display_random_images(dataframe):
     # Select 16 random rows from the dataframe
     random_selection = dataframe.sample(n=16)
 
@@ -52,11 +52,32 @@ def display_random_images(dataframe):
 
 # basic info
 # rozmiar danych
-print(df_images.shape)
-print(df_images.info())
-print(df_images.tail(10));
-# show images
-display_random_images(df_images)
+# print(df_images.shape)
+# print(df_images.info())
+# print(df_images.tail(10));
+# # show images losowe 
+# display_random_images(df_images)
+
+# age_group_images = df_images.groupby('Age')['Images'].apply(lambda x: np.mean(np.array(list(x)), axis=0))
+# n = len(age_group_images)  
+
+
+# rows = cols = math.ceil(math.sqrt(n))
+# fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 4))
+# #wyswietlenie sredniej twarzy kazdej grupy
+# for i, (age, image) in enumerate(age_group_images.items()):
+   
+#     row = i // cols
+#     col = i % cols
+#     ax = axs[row, col] if n > 1 else axs
+#     ax.imshow(image.astype('uint8'))
+#     ax.set_title(f'Wiek {age}')
+#     ax.axis('off')
+
+# for i in range(n, rows*cols):
+#     axs.flat[i].axis('off')
+# plt.show()
+
 
 # ilosc osob w danym wieku
 plt.figure(figsize=(10, 6))
@@ -110,27 +131,64 @@ plt.grid(axis='y')
 plt.show()
 
 
-age_group_images = df_images.groupby('Age')['Images'].apply(lambda x: np.mean(np.array(list(x)), axis=0))
-n = len(age_group_images)  
+
+def calculate_image_features(image_array):
+    """Oblicza jasność i kontrast obrazu."""
+    brightness = np.mean(image_array)  # Średnia jasność
+    contrast = np.std(image_array)     # Standardowe odchylenie pikseli dla kontrastu
+    return brightness, contrast
+
+# Przetwarzanie obrazów i dodawanie cech do DataFrame
+brightness = []
+contrast = []
+
+for img_array in df_images['Images']:
+    img_brightness, img_contrast = calculate_image_features(img_array)
+    brightness.append(img_brightness)
+    contrast.append(img_contrast)
+
+df_images['Brightness'] = brightness
+df_images['Contrast'] = contrast
+
+# Tworzenie wykresów
+plt.figure(figsize=(10, 6))
+sns.histplot(data=df_images, x='Brightness')
+plt.title('Rozkład Jasności Obrazów')
+plt.xlabel('Jasność')
+plt.ylabel('Liczba Obrazów')
+plt.show()
+
+plt.figure(figsize=(10, 6))
+sns.histplot(data=df_images, x='Contrast')
+plt.title('Rozkład Kontrastu Obrazów')
+plt.xlabel('Kontrast')
+plt.ylabel('Liczba Obrazów')
+plt.show()
 
 
-rows = cols = math.ceil(math.sqrt(n))
+average_brightness_by_age = df_images.groupby('Age')['Brightness'].mean()
 
 
-fig, axs = plt.subplots(rows, cols, figsize=(cols * 4, rows * 4))
+plt.figure(figsize=(10, 6))
+plt.bar(average_brightness_by_age.index, average_brightness_by_age.values, edgecolor='black')
+plt.title('Średnia Jasność Obrazów w Zależności od Wiek')
+plt.xlabel('Wiek')
+plt.ylabel('Średnia Jasność')
+plt.xticks(np.arange(0, 101, 5))  
+plt.grid(axis='y')
+plt.show()
 
-for i, (age, image) in enumerate(age_group_images.items()):
-   
-    row = i // cols
-    col = i % cols
-    ax = axs[row, col] if n > 1 else axs
-    ax.imshow(image.astype('uint8'))
-    ax.set_title(f'Wiek {age}')
-    ax.axis('off')
+# Sredni dla gup wiekowych wanie i obliczanie średniego kontrastu dla każdej grupy wiekowej
+average_contrast_by_age = df_images.groupby('Age')['Contrast'].mean()
 
-for i in range(n, rows*cols):
-    axs.flat[i].axis('off')
-
+# wykres
+plt.figure(figsize=(10, 6))
+plt.bar(average_contrast_by_age.index, average_contrast_by_age.values, edgecolor='black')
+plt.title('Średni Kontrast Obrazów w Zależności od Wiek')
+plt.xlabel('Wiek')
+plt.ylabel('Średni Kontrast')
+plt.xticks(np.arange(0, 101, 5))  
+plt.grid(axis='y')
 plt.show()
 
 # age_counts = count_images_per_age(df_images)
