@@ -20,7 +20,7 @@ vid.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
 window = tk.Tk()
 window.title("Simple Window")
-window.geometry("300x200")
+window.geometry("600x400")
 
 menu_bar = tk.Menu(window)
 
@@ -40,7 +40,7 @@ window.config(menu=menu_bar)
 image_label = tk.Label(window)
 image_label.pack()
 
-window.geometry("700x400")
+window.geometry("1000x600")
 window.title("Age recognition")
 window.mainloop()
 

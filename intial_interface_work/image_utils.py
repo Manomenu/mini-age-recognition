@@ -4,39 +4,46 @@ from tkinter import filedialog
 from PIL import Image, ImageTk
 import face_recognition
 import cv2
+import random
 is_update_frame_running = False
+
+font_size = 2
+font_face = cv2.FONT_HERSHEY_SIMPLEX
+font_color = (255,255,255)
+line_type = 6
 
 def load_image(image_label, window):
     file_path = filedialog.askopenfilename()
-
+     
     if file_path:
+        face_image=None
         #image = Image.open(file_path)  # Open the selected image file
         #image = ImageTk.PhotoImage(image)  # Convert the image to Tkinter PhotoImage format
-
         elo = face_recognition.load_image_file(file_path)
         face_locations = face_recognition.face_locations(elo)
-
         if face_locations:
             for face_location in face_locations:
                 top, right, bottom, left = face_location 
                 face_image = elo[:, :]
-                padding = 0
-                cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
-       
-            padding = 0
-            cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
+                drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0,100))
+            #padding = 0
+            #cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
 
+           
         max_width = window.winfo_width()
         max_height = window.winfo_height()
-       # face_image=face_recognition(elo);
-        pil_image = Image.fromarray(face_image) # Convert NumPy array to PIL Image
-
+        if face_image is None:
+            face_image=elo
+       
+        pil_image = Image.fromarray(face_image)
         pil_image.thumbnail((max_width, max_height), Image.LANCZOS)
-        tk_image = ImageTk.PhotoImage(pil_image)  # Convert PIL Image to Tkinter PhotoImage
+        tk_image = ImageTk.PhotoImage(pil_image)
 
-        image_label.config(image=tk_image)  # Set the image to the label
-        image_label.image = tk_image 
+        image_label.config(image=tk_image)
+        image_label.image = tk_image
+       
     return 
+
 
 
 def load_folder(canvas_frame):
@@ -78,7 +85,6 @@ def load_folder(canvas_frame):
 
 # pierwsza 
 
-#https://www.geeksforgeeks.org/how-to-show-webcam-in-tkinter-window-python/
 
 def toggle_camera(image_label, vid):
     global is_update_frame_running
@@ -93,8 +99,12 @@ def toggle_camera(image_label, vid):
     else:
         
         if not vid.isOpened():
-            vid.open(0)
+            vid = cv2.VideoCapture(0) 
+            width, height = 700, 400
+  
 
+            vid.set(cv2.CAP_PROP_FRAME_WIDTH, width) 
+            vid.set(cv2.CAP_PROP_FRAME_HEIGHT, height) 
 
         
         is_update_frame_running = True
@@ -109,7 +119,7 @@ def open_camera2(image_label, vid):
     
     # Function to update the frame in the Tkinter label
     def update_frame():
-        nonlocal process_this_frame, face_locations;
+        nonlocal process_this_frame, face_locations
         # Grab a single frame of video
 
         if not is_update_frame_running:
@@ -122,23 +132,22 @@ def open_camera2(image_label, vid):
             print("Failed to grab frame")
             image_label.after(10, update_frame)
             return
-
+        frame = cv2.flip(frame, 1)
         # Only process every other frame of video to save time
         if process_this_frame:
-            # Resize frame for faster processing
-            small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-            # Convert BGR to RGB
-            rgb_small_frame = small_frame[:, :, ::-1]
-
-            # Find all the faces and face encodings
-            face_locations = face_recognition.face_locations(rgb_small_frame)
+           # Resize frame for faster processing
+           small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+           # Convert BGR to RGB
+           rgb_small_frame = small_frame[:, :, ::-1]
+            
+          #  Find all the faces and face encodings
+           face_locations = face_recognition.face_locations(rgb_small_frame);
             
 
             
             
 
         process_this_frame = not process_this_frame
-
         # Display the results
         for (top, right, bottom, left) in face_locations:
             top *= 4
@@ -147,7 +156,8 @@ def open_camera2(image_label, vid):
             left *= 4
 
             # Draw a box around the face
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+            drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, random.randint(0,100))
+            #cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
             # Draw a label with a name below the face
            # font = cv2.FONT_HERSHEY_DUPLEX
            # name="HANDSOME GAY"
@@ -155,7 +165,6 @@ def open_camera2(image_label, vid):
            # cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
             
 
-       
         pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         photo_image = ImageTk.PhotoImage(pil_image)
 
@@ -167,3 +176,14 @@ def open_camera2(image_label, vid):
         image_label.after(10, update_frame)
 
     update_frame()
+
+
+def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate):
+    padding = 2
+    cv2.rectangle(image, (left - padding , top - padding ), (right + padding , bottom+ padding), (36,255,12), 10)
+    label = str(ageEstimate)
+    (w, h), _ = cv2.getTextSize(label, font_face,  font_size, line_type)
+
+    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), 10)
+    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), -1)
+    cv2.putText(image, label ,(left, top), font_face, font_size ,font_color ,line_type)
