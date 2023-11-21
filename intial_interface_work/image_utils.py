@@ -119,7 +119,7 @@ def open_camera2(image_label, vid):
     
     # Function to update the frame in the Tkinter label
     def update_frame():
-        nonlocal process_this_frame, face_locations;
+        nonlocal process_this_frame, face_locations
         # Grab a single frame of video
 
         if not is_update_frame_running:
@@ -132,14 +132,14 @@ def open_camera2(image_label, vid):
             print("Failed to grab frame")
             image_label.after(10, update_frame)
             return
-
+        frame = cv2.flip(frame, 1)
         # Only process every other frame of video to save time
         if process_this_frame:
            # Resize frame for faster processing
            small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
            # Convert BGR to RGB
            rgb_small_frame = small_frame[:, :, ::-1]
-
+            
           #  Find all the faces and face encodings
            face_locations = face_recognition.face_locations(rgb_small_frame);
             
@@ -148,7 +148,6 @@ def open_camera2(image_label, vid):
             
 
         process_this_frame = not process_this_frame
-
         # Display the results
         for (top, right, bottom, left) in face_locations:
             top *= 4
@@ -157,7 +156,8 @@ def open_camera2(image_label, vid):
             left *= 4
 
             # Draw a box around the face
-            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+            drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, random.randint(0,100))
+            #cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
             # Draw a label with a name below the face
            # font = cv2.FONT_HERSHEY_DUPLEX
            # name="HANDSOME GAY"
@@ -165,7 +165,6 @@ def open_camera2(image_label, vid):
            # cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
             
 
-       
         pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         photo_image = ImageTk.PhotoImage(pil_image)
 
