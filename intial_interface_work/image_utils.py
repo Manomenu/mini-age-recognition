@@ -4,13 +4,19 @@ from tkinter import filedialog
 from PIL import Image, ImageTk
 import face_recognition
 import cv2
+import random
 is_update_frame_running = False
+
+font_size = 2
+font_face = cv2.FONT_HERSHEY_SIMPLEX
+font_color = (255,255,255)
+line_type = 6
 
 def load_image(image_label, window):
     file_path = filedialog.askopenfilename()
      
     if file_path:
-        face_image=None;
+        face_image=None
         #image = Image.open(file_path)  # Open the selected image file
         #image = ImageTk.PhotoImage(image)  # Convert the image to Tkinter PhotoImage format
         elo = face_recognition.load_image_file(file_path)
@@ -19,8 +25,7 @@ def load_image(image_label, window):
             for face_location in face_locations:
                 top, right, bottom, left = face_location 
                 face_image = elo[:, :]
-                padding = 0
-                cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
+                drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0,100))
             #padding = 0
             #cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
 
@@ -28,7 +33,7 @@ def load_image(image_label, window):
         max_width = window.winfo_width()
         max_height = window.winfo_height()
         if face_image is None:
-            face_image=elo;
+            face_image=elo
        
         pil_image = Image.fromarray(face_image)
         pil_image.thumbnail((max_width, max_height), Image.LANCZOS)
@@ -80,7 +85,6 @@ def load_folder(canvas_frame):
 
 # pierwsza 
 
-#https://www.geeksforgeeks.org/how-to-show-webcam-in-tkinter-window-python/
 
 def toggle_camera(image_label, vid):
     global is_update_frame_running
@@ -173,3 +177,14 @@ def open_camera2(image_label, vid):
         image_label.after(10, update_frame)
 
     update_frame()
+
+
+def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate):
+    padding = 2
+    cv2.rectangle(image, (left - padding , top - padding ), (right + padding , bottom+ padding), (36,255,12), 10)
+    label = str(ageEstimate)
+    (w, h), _ = cv2.getTextSize(label, font_face,  font_size, line_type)
+
+    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), 10)
+    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), -1)
+    cv2.putText(image, label ,(left, top), font_face, font_size ,font_color ,line_type)
