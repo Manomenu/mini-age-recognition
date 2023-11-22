@@ -7,10 +7,10 @@ import cv2
 import random
 is_update_frame_running = False
 
-font_size = 2
+font_size = 1
 font_face = cv2.FONT_HERSHEY_SIMPLEX
 font_color = (255,255,255)
-line_type = 6
+line_type = 4
 
 def load_image(image_label, window):
     file_path = filedialog.askopenfilename()
@@ -26,9 +26,6 @@ def load_image(image_label, window):
                 top, right, bottom, left = face_location 
                 face_image = elo[:, :]
                 drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0,100))
-            #padding = 0
-            #cv2.rectangle(face_image, (left - padding , top - padding ), (right + padding , bottom+ padding), (255,0,0), 2)
-
            
         max_width = window.winfo_width()
         max_height = window.winfo_height()
@@ -46,41 +43,30 @@ def load_image(image_label, window):
 
 
 
-def load_folder(canvas_frame):
+def load_folder():
     folder_path = filedialog.askdirectory()  # Open a directory dialog to choose a folder
     if folder_path:
+        result_folder = os.path.join(folder_path, 'result')
         image_files = [file for file in os.listdir(folder_path) if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
 
-        images = []
         for image_file in image_files:
             image_path = os.path.join(folder_path, image_file)
-            original_image = Image.open(image_path)
-            resized_image = original_image.resize((100, 300))  # Resize the image to specific width and height
-            image = ImageTk.PhotoImage(resized_image)
-            images.append(image)
+            # original_image = Image.open(image_path)
+            # image = ImageTk.PhotoImage(original_image)
 
-        if images:
-            #canvas_frame.delete("all")  # Clear the canvas
-            canvas = tk.Canvas(canvas_frame)
-            canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            face_rec_image = face_recognition.load_image_file(image_path)
+            face_locations = face_recognition.face_locations(face_rec_image)
+            if face_locations:
+                for face_location in face_locations:
+                    top, right, bottom, left = face_location 
+                    face_image = face_rec_image[:, :]
+                    drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0,100))
+            
 
-            scrollbar = tk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=canvas.yview)
-            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-            canvas.config(yscrollcommand=scrollbar.set)
-            canvas.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-
-            frame = tk.Frame(canvas)
-            canvas.create_window((0, 0), window=frame, anchor='nw')
-
-            for image in images:
-                image_label = tk.Label(frame, image=image)
-                image_label.image = image  # Keep a reference to the image to prevent it from being garbage collected
-                image_label.pack()
-
-            frame.update_idletasks()  # Update the frame to calculate the proper scroll region
-
-            canvas.config(scrollregion=canvas.bbox("all"))
+            os.makedirs(result_folder, exist_ok=True)
+            pil_image = Image.fromarray(face_rec_image)
+            result_image_path = os.path.join(result_folder, f"result_{image_file}")
+            pil_image.save(result_image_path, quality=95)
 
 
 # pierwsza 
@@ -141,12 +127,8 @@ def open_camera2(image_label, vid):
            rgb_small_frame = small_frame[:, :, ::-1]
             
           #  Find all the faces and face encodings
-           face_locations = face_recognition.face_locations(rgb_small_frame);
+           face_locations = face_recognition.face_locations(rgb_small_frame)
             
-
-            
-            
-
         process_this_frame = not process_this_frame
         # Display the results
         for (top, right, bottom, left) in face_locations:
@@ -155,14 +137,7 @@ def open_camera2(image_label, vid):
             bottom *= 4
             left *= 4
 
-            # Draw a box around the face
             drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, random.randint(0,100))
-            #cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
-            # Draw a label with a name below the face
-           # font = cv2.FONT_HERSHEY_DUPLEX
-           # name="HANDSOME GAY"
-            #cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
-           # cv2.putText(frame, name, (left + 6, bottom - 6), font, 0.5, (255, 255, 255), 1)
             
 
         pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
@@ -178,12 +153,65 @@ def open_camera2(image_label, vid):
     update_frame()
 
 
+def load_video():
+    video_path = filedialog.askopenfilename()
+    if not video_path.lower().endswith(('.mp4')):
+        print("wrong file format")
+        return
+
+    vid = cv2.VideoCapture(video_path)
+
+    # Get video information
+    fps = int(vid.get(cv2.CAP_PROP_FPS))
+    width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    result_folder = os.path.join(os.path.dirname(video_path), 'result')
+    os.makedirs(result_folder, exist_ok=True)
+
+    # Define the codec and create a VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # You can change the codec as needed
+    result_video_path = os.path.join(result_folder, "result_video.mp4")
+    out = cv2.VideoWriter(result_video_path, fourcc, fps, (width, height))
+
+    while True:
+        ret, frame = vid.read()
+
+        if not ret:
+            print("Video processing completed.")
+            break
+
+        frame = cv2.flip(frame, 1)
+
+        small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+           # Convert BGR to RGB
+        rgb_small_frame = small_frame[:, :, ::-1]
+        # Find all the faces and face encodings
+        face_locations = face_recognition.face_locations(rgb_small_frame)
+
+        # Display the results
+        for (top, right, bottom, left) in face_locations:
+            top *=2
+            right *=2
+            bottom *=2
+            left *=2
+
+            drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, random.randint(0, 100))
+
+        # Write the modified frame to the output video file
+        out.write(frame)
+
+    # Release the VideoCapture and VideoWriter objects
+    vid.release()
+    out.release()
+    return
+
 def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate):
     padding = 2
-    cv2.rectangle(image, (left - padding , top - padding ), (right + padding , bottom+ padding), (36,255,12), 10)
+    cv2.rectangle(image, (left - padding , top - padding ), (right + padding , bottom+ padding), (36,255,12), 5)
     label = str(ageEstimate)
     (w, h), _ = cv2.getTextSize(label, font_face,  font_size, line_type)
 
-    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), 10)
+    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), 5)
     cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), -1)
     cv2.putText(image, label ,(left, top), font_face, font_size ,font_color ,line_type)
