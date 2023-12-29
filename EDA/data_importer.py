@@ -51,6 +51,7 @@ class data_importer:
                         info = cls.extract_info_from_filename(file_name)
                         if info is not None and len(info) == 3:  # Sprawdź, czy info ma oczekiwaną długość
                             age, gender, ethnicity = info
+                            
                             ages.append(age)
                             genders.append(gender)
                             ethnicities.append(ethnicity)
@@ -75,7 +76,8 @@ class data_importer:
             gender = int(match.group(2))
             race = int(match.group(3))
             # date_time = match.group(4)  # If you need date&time as well
-
+            if(age>=80):
+                 age=80
             return age, gender, race
         else:
             return None
