@@ -43,6 +43,11 @@ def apply_gabor_filter(image, kernel_size=31, sigma=4.0, theta=0, lam=10.0, gamm
     filtered_image = cv2.filter2D(image, -1, gabor_kernel)
     return filtered_image
 
+def aplly_ege_filter(img):
+    min_intensity_grad, max_intensity_grad = 100, 200
+    edge_img = cv2.Canny(img, min_intensity_grad, max_intensity_grad) 
+    return edge_img
+
 def display_random_images(dataframe):
  
     random_selection = dataframe.sample(n=16)
@@ -62,10 +67,7 @@ def display_random_images(dataframe):
     plt.show()
 
 
-def aplly_ege_filter(img):
-    min_intensity_grad, max_intensity_grad = 100, 200
-    edge_img = cv2.Canny(img, min_intensity_grad, max_intensity_grad) 
-    return edge_img
+
 
 plt.show()
 brightness = []
