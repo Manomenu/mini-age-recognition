@@ -67,13 +67,31 @@ def aplly_ege_filter(img):
     edge_img = cv2.Canny(img, min_intensity_grad, max_intensity_grad) 
     return edge_img
 
+
+# accepting just dataframe that has one column ['Images']
+# you can convert array to dataframe like so: pd.DataFrame(array, ['Images'])
+def random_imgs(images_only_dataframe):
+    # Select 16 random rows from the dataframe
+    random_selection = images_only_dataframe.sample(n=16)
+
+    # Create a 4x4 subplot grid
+    fig, axes = plt.subplots(4, 4, figsize=(10, 10))
+    fig.subplots_adjust(hspace=0.5, wspace=0.5)
+    fig.suptitle('Sample Images')
+
+    for i, ax in enumerate(axes.flat):
+        # Plot each image
+        if i < len(random_selection):
+            image_data = random_selection.iloc[i]['Images']
+            ax.imshow(image_data)
+            ax.axis('off')
+    plt.show()
+
+
+
 plt.show()
 brightness = []
 contrast = []
-
-
-  
-
 
 brightness_after_gabor = []
 contrast_after_gabor = []
