@@ -57,8 +57,10 @@ class data_importer:
                         else:
                             print(f"Problem with file: {file_name}. Skipping...")
 
-        #  tworzenie data frame
+        #  tworzenie data 
+        # frame 
         df = pd.DataFrame({'Images': image_data, 'Age': ages, 'Gender': genders, 'Race': ethnicities,'Size':file_sizes})
+      
         
         
         return df
