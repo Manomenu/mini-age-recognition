@@ -5,6 +5,12 @@ from PIL import Image, ImageTk
 import face_recognition
 import cv2
 import random
+import numpy as np
+from skimage.transform import resize
+from sklearn.preprocessing import StandardScaler
+import joblib
+
+
 is_update_frame_running = False
 
 font_size = 1
@@ -25,7 +31,9 @@ def load_image(image_label, window):
             for face_location in face_locations:
                 top, right, bottom, left = face_location 
                 face_image = elo[:, :]
-                drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0,100))
+                age_prediction = predict_age(face_image)
+
+                drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, age_prediction)
            
         max_width = window.winfo_width()
         max_height = window.winfo_height()
@@ -215,3 +223,32 @@ def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate)
     cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), 5)
     cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), -1)
     cv2.putText(image, label ,(left, top), font_face, font_size ,font_color ,line_type)
+
+
+def preprocess_image(image_path):
+    # Load and preprocess the image
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    processed_image = resize(image, (50, 50), mode='constant', anti_aliasing=True).flatten()
+    processed_image = StandardScaler().fit_transform(processed_image.reshape(-1, 1)).ravel()
+    return processed_image
+
+def preprocess_image(image):
+    # Preprocess the image in a way similar to what was done during model training
+    processed_image = resize(image, (50, 50), mode='constant', anti_aliasing=True).flatten()
+    processed_image = StandardScaler().fit_transform(processed_image.reshape(-1, 1)).ravel()
+    return processed_image
+
+def predict_age(face_image):
+    # Load the trained model (assuming it's saved as model.pkl)
+    model = joblib.load('model.pkl')
+
+    # Preprocess the face image
+    processed_image = preprocess_image(face_image)
+
+    # Combine age and image features
+    sample_data = np.hstack([[0], processed_image])  # '0' is a placeholder for age
+
+    # Use the trained model to make predictions
+    predicted_age = model.predict(sample_data.reshape(1, -1))[0]
+
+    return predicted_age
