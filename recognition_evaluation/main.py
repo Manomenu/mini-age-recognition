@@ -14,6 +14,7 @@
 #     print_hi('PyCharm')
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+import math
 import os
 import cv2
 import numpy as np
@@ -28,6 +29,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+import matplotlib.pyplot as plt
 
 def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate):
     padding = 2
@@ -44,33 +47,33 @@ def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate)
 
 # Testing the face recognition
 
-with open('PeopleDataVerification.txt', 'w', encoding='utf-8') as out:
-    folder_path = "./Selected"
-    # odpal program bedac w folderze recognitio_evaluation
-    result_folder = os.path.join("./", 'result')
-    image_files = [file for file in os.listdir(folder_path) if
-                   file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
+# with open('PeopleDataVerification.txt', 'w', encoding='utf-8') as out:
+#     folder_path = "./Selected"
+#     # odpal program bedac w folderze recognitio_evaluation
+#     result_folder = os.path.join("./", 'result')
+#     image_files = [file for file in os.listdir(folder_path) if
+#                    file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
 
-    for image_file in image_files:
-        image_path = os.path.join(folder_path, image_file)
-        # original_image = Image.open(image_path)
-        # image = ImageTk.PhotoImage(original_image)
+#     for image_file in image_files:
+#         image_path = os.path.join(folder_path, image_file)
+#         # original_image = Image.open(image_path)
+#         # image = ImageTk.PhotoImage(original_image)
 
-        face_rec_image = face_recognition.load_image_file(image_path)
-        face_locations = face_recognition.face_locations(face_rec_image)
-        face_count = 0
-        if face_locations:
-            for face_location in face_locations:
-                face_count += 1
-                top, right, bottom, left = face_location
-                face_image = face_rec_image[:, :]
-                drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0, 100))
-        out.write(image_file.split(".")[0] + "." + image_file.split(".")[1] + ";" + str(face_count) + "\n")
+#         face_rec_image = face_recognition.load_image_file(image_path)
+#         face_locations = face_recognition.face_locations(face_rec_image)
+#         face_count = 0
+#         if face_locations:
+#             for face_location in face_locations:
+#                 face_count += 1
+#                 top, right, bottom, left = face_location
+#                 face_image = face_rec_image[:, :]
+#                 drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0, 100))
+#         out.write(image_file.split(".")[0] + "." + image_file.split(".")[1] + ";" + str(face_count) + "\n")
 
-        os.makedirs(result_folder, exist_ok=True)
-        pil_image = Image.fromarray(face_rec_image)
-        result_image_path = os.path.join(result_folder, f"result_{image_file}")
-        pil_image.save(result_image_path, quality=95)
+#         os.makedirs(result_folder, exist_ok=True)
+#         pil_image = Image.fromarray(face_rec_image)
+#         result_image_path = os.path.join(result_folder, f"result_{image_file}")
+#         pil_image.save(result_image_path, quality=95)
 
 
 
@@ -166,3 +169,225 @@ with open('PeopleDataVerification.txt', 'w', encoding='utf-8') as out:
 #     if count % 10 == 0:
 #         print(count)
 #     count += 1
+        
+
+
+
+
+
+size = [0] * 11
+TP = [[0] * 15 for i in range(4)]
+TN = [[0] * 15 for i in range(4)]
+FP = [[0] * 15 for i in range(4)]
+FN = [[0] * 15 for i in range(4)]
+TPSize = [[0] * 11 for i in range(4)]
+TNSize = [[0] * 11 for i in range(4)]
+FPSize = [[0] * 11 for i in range(4)]
+FNSize = [[0] * 11 for i in range(4)]
+f = open(f"./PeopleDataResults.txt", "r")
+Lines = f.readlines()
+for line in Lines:
+    line = line.strip()
+    if line.startswith("name"):
+        continue
+    pixelCount = math.floor(int(line.split(";")[1]) / 100000)
+    targetRes = line.split(";")[2]
+    for i in range(4):
+        TP[i][max(1,int(targetRes))] += min(int(targetRes), int(line.split(";")[3 + i]))
+        FP[i][max(1,int(targetRes))] += max(0, int(line.split(";")[3 + i]) - int(targetRes))
+        FN[i][max(1,int(targetRes))] += max(0, int(targetRes) - int(line.split(";")[3 + i]))
+        if int(targetRes) == 0 and int(line.split(";")[3 + i]) == 0:
+            TN[i][1] += 1
+            TNSize[i][pixelCount] += 1
+        TPSize[i][pixelCount] += min(int(targetRes), int(line.split(";")[3 + i]))
+        FPSize[i][pixelCount] += max(0, int(line.split(";")[3 + i]) - int(targetRes))
+        FNSize[i][pixelCount] += max(0, int(targetRes) - int(line.split(";")[3 + i]))
+
+accuracy = np.divide(np.add(TP, TN), np.add(np.add(TP,TN), np.add(FP,FN)))
+precision = np.divide(TP, np.add(TP, FP))
+recall = np.divide(TP, np.add(TP, FN))
+f1_score = 2 * np.divide(np.multiply(precision, recall), np.add(precision, recall))
+accuracySize = np.divide(np.add(TPSize, TNSize), np.add(np.add(TPSize,TNSize), np.add(FPSize,FNSize)))
+precisionSize = np.divide(TPSize, np.add(TPSize, FPSize))
+recallSize = np.divide(TPSize, np.add(TPSize, FNSize))
+f1_scoreSize = 2 * np.divide(np.multiply(precisionSize, recallSize), np.add(precisionSize, recallSize))
+
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig.suptitle('Accuracy depending on person count')
+axs[0, 0].bar(range(1, 15), accuracy[0][1:], color='orange')
+axs[0, 0].set_title('Original photo')
+axs[0, 1].bar(range(1, 15), accuracy[1][1:], color='red')
+axs[0, 1].set_title('Blurred photo')
+axs[1, 0].bar(range(1, 15), accuracy[2][1:], color='green')
+axs[1, 0].set_title('Lowered contrast')
+axs[1, 1].bar(range(1, 15), accuracy[3][1:], color='blue')
+axs[1, 1].set_title('Gamma filter')
+for ax in axs.flat:
+    ax.set(xlabel='Number of people', ylabel='Accuracy')
+for ax in axs.flat:
+    ax.label_outer()
+for i in range(2):
+    for j in range(2):
+        index = i * 2 + j
+        ax = axs[i, j]
+        for x, y in zip(range(1, 15), accuracy[index][1:]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom')
+plt.show()
+
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig.suptitle('Accuracy depending on image size')
+axs[0, 0].bar(range(0, 11), accuracySize[0][:], color='orange')
+axs[0, 0].set_title('Original photo')
+axs[0, 1].bar(range(0, 11), accuracySize[1][:], color='red')
+axs[0, 1].set_title('Blurred photo')
+axs[1, 0].bar(range(0, 11), accuracySize[2][:], color='green')
+axs[1, 0].set_title('Lowered contrast')
+axs[1, 1].bar(range(0, 11), accuracySize[3][:], color='blue')
+axs[1, 1].set_title('Gamma filter')
+for ax in axs.flat:
+    ax.set(xlabel='Size (x 100kB)', ylabel='Accuracy')
+for ax in axs.flat:
+    ax.label_outer()
+for i in range(2):
+    for j in range(2):
+        index = i * 2 + j
+        ax = axs[i, j]
+        for x, y in zip(range(1, 12), accuracySize[index][1:]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom')
+plt.show()
+
+
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig.suptitle('Precision depending on person count')
+axs[0, 0].bar(range(1, 15), precision[0][1:], color='orange')
+axs[0, 0].set_title('Original photo')
+axs[0, 1].bar(range(1, 15), precision[1][1:], color='red')
+axs[0, 1].set_title('Blurred photo')
+axs[1, 0].bar(range(1, 15), precision[2][1:], color='green')
+axs[1, 0].set_title('Lowered contrast')
+axs[1, 1].bar(range(1, 15), precision[3][1:], color='blue')
+axs[1, 1].set_title('Gamma filter')
+for ax in axs.flat:
+    ax.set(xlabel='Number of people', ylabel='Precision')
+for ax in axs.flat:
+    ax.label_outer()
+for i in range(2):
+    for j in range(2):
+        index = i * 2 + j
+        ax = axs[i, j]
+        for x, y in zip(range(1, 15), precision[index][1:]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom')
+plt.show()
+
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig.suptitle('Precision depending on image size')
+axs[0, 0].bar(range(0, 11), precisionSize[0][:], color='orange')
+axs[0, 0].set_title('Original photo')
+axs[0, 1].bar(range(0, 11), precisionSize[1][:], color='red')
+axs[0, 1].set_title('Blurred photo')
+axs[1, 0].bar(range(0, 11), precisionSize[2][:], color='green')
+axs[1, 0].set_title('Lowered contrast')
+axs[1, 1].bar(range(0, 11), precisionSize[3][:], color='blue')
+axs[1, 1].set_title('Gamma filter')
+for ax in axs.flat:
+    ax.set(xlabel='Size (x 100kB)', ylabel='Precision')
+for ax in axs.flat:
+    ax.label_outer()
+for i in range(2):
+    for j in range(2):
+        index = i * 2 + j
+        ax = axs[i, j]
+        for x, y in zip(range(1, 12), precisionSize[index][1:]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom')
+plt.show()
+
+
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig.suptitle('Recall depending on person count')
+axs[0, 0].bar(range(1, 15), recall[0][1:], color='orange')
+axs[0, 0].set_title('Original photo')
+axs[0, 1].bar(range(1, 15), recall[1][1:], color='red')
+axs[0, 1].set_title('Blurred photo')
+axs[1, 0].bar(range(1, 15), recall[2][1:], color='green')
+axs[1, 0].set_title('Lowered contrast')
+axs[1, 1].bar(range(1, 15), recall[3][1:], color='blue')
+axs[1, 1].set_title('Gamma filter')
+for ax in axs.flat:
+    ax.set(xlabel='Number of people', ylabel='Recall')
+for ax in axs.flat:
+    ax.label_outer()
+for i in range(2):
+    for j in range(2):
+        index = i * 2 + j
+        ax = axs[i, j]
+        for x, y in zip(range(1, 15), recall[index][1:]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom')
+plt.show()
+
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig.suptitle('Recall depending on image size')
+axs[0, 0].bar(range(0, 11), recallSize[0][:], color='orange')
+axs[0, 0].set_title('Original photo')
+axs[0, 1].bar(range(0, 11), recallSize[1][:], color='red')
+axs[0, 1].set_title('Blurred photo')
+axs[1, 0].bar(range(0, 11), recallSize[2][:], color='green')
+axs[1, 0].set_title('Lowered contrast')
+axs[1, 1].bar(range(0, 11), recallSize[3][:], color='blue')
+axs[1, 1].set_title('Gamma filter')
+for ax in axs.flat:
+    ax.set(xlabel='Size (x 100kB)', ylabel='Recall')
+for ax in axs.flat:
+    ax.label_outer()
+for i in range(2):
+    for j in range(2):
+        index = i * 2 + j
+        ax = axs[i, j]
+        for x, y in zip(range(1, 12), recallSize[index][1:]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom')
+plt.show()
+
+
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig.suptitle('F1 score depending on person count')
+axs[0, 0].bar(range(1, 15), f1_score[0][1:], color='orange')
+axs[0, 0].set_title('Original photo')
+axs[0, 1].bar(range(1, 15), f1_score[1][1:], color='red')
+axs[0, 1].set_title('Blurred photo')
+axs[1, 0].bar(range(1, 15), f1_score[2][1:], color='green')
+axs[1, 0].set_title('Lowered contrast')
+axs[1, 1].bar(range(1, 15), f1_score[3][1:], color='blue')
+axs[1, 1].set_title('Gamma filter')
+for ax in axs.flat:
+    ax.set(xlabel='Number of people', ylabel='F1 score')
+for ax in axs.flat:
+    ax.label_outer()
+for i in range(2):
+    for j in range(2):
+        index = i * 2 + j
+        ax = axs[i, j]
+        for x, y in zip(range(1, 15), f1_score[index][1:]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom')
+plt.show()
+
+
+fig, axs = plt.subplots(2, 2, figsize=(16, 9))
+fig.suptitle('F1 score depending on image size')
+axs[0, 0].bar(range(0, 11), f1_scoreSize[0][:], color='orange')
+axs[0, 0].set_title('Original photo')
+axs[0, 1].bar(range(0, 11), f1_scoreSize[1][:], color='red')
+axs[0, 1].set_title('Blurred photo')
+axs[1, 0].bar(range(0, 11), f1_scoreSize[2][:], color='green')
+axs[1, 0].set_title('Lowered contrast')
+axs[1, 1].bar(range(0, 11), f1_scoreSize[3][:], color='blue')
+axs[1, 1].set_title('Gamma filter')
+for ax in axs.flat:
+    ax.set(xlabel='Size (x 100kB)', ylabel='F1 score')
+for ax in axs.flat:
+    ax.label_outer()
+for i in range(2):
+    for j in range(2):
+        index = i * 2 + j
+        ax = axs[i, j]
+        for x, y in zip(range(1, 12), f1_scoreSize[index][1:]):
+            ax.text(x, y, f'{y:.2f}', ha='center', va='bottom')
+plt.show()
