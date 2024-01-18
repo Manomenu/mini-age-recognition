@@ -6,6 +6,7 @@ from PIL import Image, ImageTk
 import face_recognition
 import cv2
 import random
+import time
 is_update_frame_running = False
 
 font_size = 1
@@ -154,7 +155,7 @@ def open_camera2(image_label, vid):
     update_frame()
 
 
-def load_video(image_label, window):
+def load_video(image_label, window, window_width, window_height):
 
     if hasattr(image_label, 'image'):
         image_label.image = None
@@ -229,7 +230,39 @@ def load_video(image_label, window):
     # Release the VideoCapture and VideoWriter objects
     vid.release()
     out.release()
+
+    print("beofre display_processed_video function")
+    display_processed_video(image_label, result_video_path, window_width, window_height)
     return
+
+def display_processed_video(image_label, video_path, window_width, window_height):
+    vid = cv2.VideoCapture(video_path)
+    frames = []
+
+    while True:
+        ret, frame = vid.read()
+
+        if not ret:
+            break
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.resize(frame, (window_width, window_height))
+        frames.append(frame)
+
+    vid.release()
+
+    tk_images = [ImageTk.PhotoImage(Image.fromarray(frame)) for frame in frames]
+
+    # Display the processed frames in the Tkinter window
+    for tk_image in tk_images:
+        image_label.config(image=tk_image)
+        image_label.image = tk_image
+        image_label.update_idletasks()
+        time.sleep(1 / 20)  # Adjust the sleep time according to the video's frame rate
+
+    # Clear the displayed video after processing
+    image_label.config(image=None)
+    image_label.image = None
 
 def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate):
     padding = 2
