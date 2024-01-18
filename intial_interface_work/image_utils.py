@@ -4,6 +4,7 @@ from tkinter import filedialog
 from tkinter import ttk
 from PIL import Image, ImageTk
 import face_recognition
+import threading
 import cv2
 import random
 import time
@@ -156,7 +157,62 @@ def open_camera2(image_label, vid):
 
 
 def load_video(image_label, window, window_width, window_height):
+    video_thread = threading.Thread(target=process_video_thread, args=(image_label, window, window_width, window_height))
+    video_thread.start()
 
+def display_processed_video(image_label, video_path, window_width, window_height, window, total_frames):
+
+    progress_label = tk.Label(window, text="Loading your video...", font=('Helvetica', 12))
+    progress_label.pack(pady=10)
+
+    progress_bar = ttk.Progressbar(window, length=300, mode='indeterminate')
+    progress_bar.place(relx=0.5, rely=0.5, anchor=tk.CENTER)  # Center the progress bar
+    progress_bar.start()
+    window.update()
+
+    vid = cv2.VideoCapture(video_path)
+    frames = []
+
+    while True:
+        ret, frame = vid.read()
+
+        if not ret:
+            break
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.resize(frame, (window_width, window_height))
+        frames.append(frame)
+
+    vid.release()
+    progress_bar.stop()
+    progress_bar.destroy()
+    progress_label.destroy()
+
+    tk_images = [ImageTk.PhotoImage(Image.fromarray(frame)) for frame in frames]
+
+    # Display the processed frames in the Tkinter window
+    for tk_image in tk_images:
+        image_label.config(image=tk_image)
+        image_label.image = tk_image
+        image_label.update_idletasks()
+        time.sleep(1 / 20)  # Adjust the sleep time according to the video's frame rate
+
+    # Clear the displayed video after processing
+    image_label.config(image=None)
+    image_label.image = None
+
+def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate):
+    padding = 2
+    cv2.rectangle(image, (left - padding , top - padding ), (right + padding , bottom+ padding), (36,255,12), 5)
+    label = str(ageEstimate)
+    (w, h), _ = cv2.getTextSize(label, font_face,  font_size, line_type)
+
+    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), 5)
+    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), -1)
+    cv2.putText(image, label ,(left, top), font_face, font_size ,font_color ,line_type)
+    
+
+def process_video_thread(image_label, window, window_width, window_height):
     if hasattr(image_label, 'image'):
         image_label.image = None
         image_label.config(image=None)
@@ -171,10 +227,8 @@ def load_video(image_label, window, window_width, window_height):
 
     progress_bar = ttk.Progressbar(window, length=300, mode='determinate')
     progress_bar.place(relx=0.5, rely=0.5, anchor=tk.CENTER)  # Center the progress bar
-    window.update()
-
-    window.update()
     progress_bar.start()
+    window.update()
 
     vid = cv2.VideoCapture(video_path)
 
@@ -194,7 +248,6 @@ def load_video(image_label, window, window_width, window_height):
 
     while True:
         ret, frame = vid.read()
-
         if not ret:
             print("Video processing completed.")
             break
@@ -222,7 +275,7 @@ def load_video(image_label, window, window_width, window_height):
         current_frame = int(vid.get(cv2.CAP_PROP_POS_FRAMES))
         progress_value = int((current_frame / total_frames) * 100)
         progress_bar['value'] = progress_value
-        window.update_idletasks()
+        # window.update_idletasks()
 
     progress_bar.stop()
     progress_bar.destroy()
@@ -231,45 +284,7 @@ def load_video(image_label, window, window_width, window_height):
     vid.release()
     out.release()
 
-    print("beofre display_processed_video function")
-    display_processed_video(image_label, result_video_path, window_width, window_height)
+    display_processed_video(image_label, result_video_path, window_width, window_height, window, total_frames)
     return
 
-def display_processed_video(image_label, video_path, window_width, window_height):
-    vid = cv2.VideoCapture(video_path)
-    frames = []
 
-    while True:
-        ret, frame = vid.read()
-
-        if not ret:
-            break
-
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.resize(frame, (window_width, window_height))
-        frames.append(frame)
-
-    vid.release()
-
-    tk_images = [ImageTk.PhotoImage(Image.fromarray(frame)) for frame in frames]
-
-    # Display the processed frames in the Tkinter window
-    for tk_image in tk_images:
-        image_label.config(image=tk_image)
-        image_label.image = tk_image
-        image_label.update_idletasks()
-        time.sleep(1 / 20)  # Adjust the sleep time according to the video's frame rate
-
-    # Clear the displayed video after processing
-    image_label.config(image=None)
-    image_label.image = None
-
-def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate):
-    padding = 2
-    cv2.rectangle(image, (left - padding , top - padding ), (right + padding , bottom+ padding), (36,255,12), 5)
-    label = str(ageEstimate)
-    (w, h), _ = cv2.getTextSize(label, font_face,  font_size, line_type)
-
-    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), 5)
-    cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), -1)
-    cv2.putText(image, label ,(left, top), font_face, font_size ,font_color ,line_type)

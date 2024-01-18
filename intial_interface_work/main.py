@@ -7,7 +7,6 @@ import cv2
 def exit_program():
     window.destroy()
 
-
  #Define a video capture object 
 vid = cv2.VideoCapture(0) 
   
@@ -19,8 +18,8 @@ vid.set(cv2.CAP_PROP_FRAME_WIDTH, width)
 vid.set(cv2.CAP_PROP_FRAME_HEIGHT, height) 
 
 window = tk.Tk()
-window.title("Simple Window")
-window.geometry("600x400")
+# window.title("Simple Window")
+# window.geometry("600x400")
 
 menu_bar = tk.Menu(window)
 
