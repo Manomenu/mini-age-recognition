@@ -31,7 +31,7 @@ file_menu = tk.Menu(menu_bar, tearoff=0)
 file_menu.add_command(label="Image file", command=lambda: load_image(image_label, window))
 file_menu.add_command(label="Folder", command=lambda: load_folder())
 file_menu.add_command(label="Camera", command=lambda:toggle_camera(image_label,vid))
-file_menu.add_command(label="Video", command=lambda:load_video())
+file_menu.add_command(label="Video", command=lambda:load_video(image_label, window))
 menu_bar.add_cascade(label="Menu", menu=file_menu)
 
 menu_bar.add_command(label="Exit", command=exit_program)

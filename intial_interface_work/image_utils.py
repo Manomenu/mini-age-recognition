@@ -1,6 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import filedialog
+from tkinter import ttk
 from PIL import Image, ImageTk
 import face_recognition
 import cv2
@@ -153,11 +154,26 @@ def open_camera2(image_label, vid):
     update_frame()
 
 
-def load_video():
+def load_video(image_label, window):
+
+    if hasattr(image_label, 'image'):
+        image_label.image = None
+        image_label.config(image=None)
+
     video_path = filedialog.askopenfilename()
     if not video_path.lower().endswith(('.mp4')):
         print("wrong file format")
         return
+
+    progress_label = tk.Label(window, text="Processing video...", font=('Helvetica', 12))
+    progress_label.pack(pady=10)
+
+    progress_bar = ttk.Progressbar(window, length=300, mode='determinate')
+    progress_bar.place(relx=0.5, rely=0.5, anchor=tk.CENTER)  # Center the progress bar
+    window.update()
+
+    window.update()
+    progress_bar.start()
 
     vid = cv2.VideoCapture(video_path)
 
@@ -173,6 +189,7 @@ def load_video():
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # You can change the codec as needed
     result_video_path = os.path.join(result_folder, "result_video.mp4")
     out = cv2.VideoWriter(result_video_path, fourcc, fps, (width, height))
+    total_frames = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
 
     while True:
         ret, frame = vid.read()
@@ -197,10 +214,18 @@ def load_video():
             left *=2
 
             drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, random.randint(0, 100))
-
+        
         # Write the modified frame to the output video file
         out.write(frame)
 
+        current_frame = int(vid.get(cv2.CAP_PROP_POS_FRAMES))
+        progress_value = int((current_frame / total_frames) * 100)
+        progress_bar['value'] = progress_value
+        window.update_idletasks()
+
+    progress_bar.stop()
+    progress_bar.destroy()
+    progress_label.destroy()
     # Release the VideoCapture and VideoWriter objects
     vid.release()
     out.release()
