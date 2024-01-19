@@ -44,8 +44,6 @@ def load_image(image_label, window):
        
     return 
 
-
-
 def load_folder():
     folder_path = filedialog.askdirectory()  # Open a directory dialog to choose a folder
     if folder_path:
@@ -75,7 +73,7 @@ def load_folder():
 # pierwsza 
 
 
-def toggle_camera(image_label, vid):
+def toggle_camera(image_label, vid, window):
     global is_update_frame_running
 
    
@@ -97,18 +95,36 @@ def toggle_camera(image_label, vid):
 
         
         is_update_frame_running = True
-        open_camera2(image_label, vid)
+        open_camera2(image_label, vid, window)
 
 
-def open_camera2(image_label, vid):
+def open_camera2(image_label, vid, window):
     # Initialize some variables
     global is_update_frame_running
     face_locations = []
     process_this_frame = True
-    
+    frame_count = 0  # Counter for the frames saved
+    save_folder = "results"  # Folder to save frames
+    frame = None
+
+    # Create the results folder if it doesn't exist
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+
+    def on_key(event):
+        nonlocal frame_count, frame, save_folder
+        if event.char == 's':
+            print(f"Will try to save")
+            frame_count += 1
+            save_path = os.path.join(save_folder, f"frame{frame_count}.jpg")
+            cv2.imwrite(save_path, frame)
+            print(f"Frame saved as {save_path}")
+
+    window.bind('<KeyPress>', on_key)
+
     # Function to update the frame in the Tkinter label
     def update_frame():
-        nonlocal process_this_frame, face_locations
+        nonlocal process_this_frame, face_locations, frame
         # Grab a single frame of video
 
         if not is_update_frame_running:
@@ -141,7 +157,8 @@ def open_camera2(image_label, vid):
             left *= 4
 
             drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, random.randint(0,100))
-            
+        
+        
 
         pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
         photo_image = ImageTk.PhotoImage(pil_image)
@@ -211,7 +228,6 @@ def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate)
     cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), -1)
     cv2.putText(image, label ,(left, top), font_face, font_size ,font_color ,line_type)
     
-
 def process_video_thread(image_label, window, window_width, window_height):
     if hasattr(image_label, 'image'):
         image_label.image = None
