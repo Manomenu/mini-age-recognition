@@ -4,8 +4,21 @@ from PIL import Image, ImageTk
 from image_utils import load_image, load_folder, toggle_camera, load_video
 import cv2
 
+import tensorflow as tf
+from tensorflow import keras
+
 def exit_program():
     window.destroy()
+
+def load_model():
+    print("test")
+    print(tf.version.VERSION)
+
+    new_model = tf.keras.models.load_model("my_model.h5")
+    print(new_model.summary()) 
+    return new_model
+
+age_prediction_model = load_model()
 
  #Define a video capture object 
 vid = cv2.VideoCapture(0) 
@@ -27,10 +40,10 @@ canvas_frame = tk.Frame(window)
 canvas_frame.pack(fill=tk.BOTH, expand=True)
 
 file_menu = tk.Menu(menu_bar, tearoff=0)
-file_menu.add_command(label="Image file", command=lambda: load_image(image_label, window))
-file_menu.add_command(label="Folder", command=lambda: load_folder())
-file_menu.add_command(label="Camera", command=lambda:toggle_camera(image_label,vid, window))
-file_menu.add_command(label="Video", command=lambda:load_video(image_label, window, 1000, 600))
+file_menu.add_command(label="Image file", command=lambda: load_image(image_label, window, age_prediction_model))
+file_menu.add_command(label="Folder", command=lambda: load_folder(age_prediction_model))
+file_menu.add_command(label="Camera", command=lambda:toggle_camera(image_label,vid, window, age_prediction_model))
+file_menu.add_command(label="Video", command=lambda:load_video(image_label, window, 1000, 600, age_prediction_model))
 menu_bar.add_cascade(label="Menu", menu=file_menu)
 
 menu_bar.add_command(label="Exit", command=exit_program)
@@ -43,6 +56,9 @@ image_label.pack()
 window.geometry("1000x600")
 window.title("Age recognition")
 window.mainloop()
+
+
+
 
 
 

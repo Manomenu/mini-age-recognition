@@ -8,6 +8,8 @@ import threading
 import cv2
 import random
 import time
+import numpy as np
+
 is_update_frame_running = False
 
 font_size = 1
@@ -15,7 +17,7 @@ font_face = cv2.FONT_HERSHEY_SIMPLEX
 font_color = (255,255,255)
 line_type = 4
 
-def load_image(image_label, window):
+def load_image(image_label, window, model):
     file_path = filedialog.askopenfilename()
      
     if file_path:
@@ -28,7 +30,10 @@ def load_image(image_label, window):
             for face_location in face_locations:
                 top, right, bottom, left = face_location 
                 face_image = elo[:, :]
-                drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0,100))
+                
+                cropped_and_resized = reize_to_required_size(elo[top:bottom,left:right].copy())
+
+                drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, predict_age(model, cropped_and_resized))
            
         max_width = window.winfo_width()
         max_height = window.winfo_height()
@@ -44,7 +49,7 @@ def load_image(image_label, window):
        
     return 
 
-def load_folder():
+def load_folder(model):
     folder_path = filedialog.askdirectory()  # Open a directory dialog to choose a folder
     if folder_path:
         result_folder = os.path.join(folder_path, 'result')
@@ -61,7 +66,10 @@ def load_folder():
                 for face_location in face_locations:
                     top, right, bottom, left = face_location 
                     face_image = face_rec_image[:, :]
-                    drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, random.randint(0,100))
+
+                    cropped_and_resized = reize_to_required_size(face_rec_image[top:bottom,left:right].copy())
+
+                    drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, predict_age(model, cropped_and_resized))
             
 
             os.makedirs(result_folder, exist_ok=True)
@@ -73,7 +81,7 @@ def load_folder():
 # pierwsza 
 
 
-def toggle_camera(image_label, vid, window):
+def toggle_camera(image_label, vid, window, model):
     global is_update_frame_running
 
    
@@ -95,10 +103,10 @@ def toggle_camera(image_label, vid, window):
 
         
         is_update_frame_running = True
-        open_camera2(image_label, vid, window)
+        open_camera2(image_label, vid, window,model)
 
 
-def open_camera2(image_label, vid, window):
+def open_camera2(image_label, vid, window, model):
     # Initialize some variables
     global is_update_frame_running
     face_locations = []
@@ -156,7 +164,9 @@ def open_camera2(image_label, vid, window):
             bottom *= 4
             left *= 4
 
-            drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, random.randint(0,100))
+            cropped_and_resized = reize_to_required_size(frame[top:bottom,left:right].copy())
+
+            drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, predict_age(model, cropped_and_resized))
         
         
 
@@ -173,8 +183,8 @@ def open_camera2(image_label, vid, window):
     update_frame()
 
 
-def load_video(image_label, window, window_width, window_height):
-    video_thread = threading.Thread(target=process_video_thread, args=(image_label, window, window_width, window_height))
+def load_video(image_label, window, window_width, window_height, model):
+    video_thread = threading.Thread(target=process_video_thread, args=(image_label, window, window_width, window_height, model))
     video_thread.start()
 
 def display_processed_video(image_label, video_path, window_width, window_height, window, total_frames):
@@ -228,7 +238,7 @@ def drawBoundingBoxWithAgeEstimate(image, left, top, bottom, right, ageEstimate)
     cv2.rectangle(image, (left , top - h - padding ), (left + w + padding, top), (36,255,12), -1)
     cv2.putText(image, label ,(left, top), font_face, font_size ,font_color ,line_type)
     
-def process_video_thread(image_label, window, window_width, window_height):
+def process_video_thread(image_label, window, window_width, window_height, model):
     if hasattr(image_label, 'image'):
         image_label.image = None
         image_label.config(image=None)
@@ -283,7 +293,8 @@ def process_video_thread(image_label, window, window_width, window_height):
             bottom *=2
             left *=2
 
-            drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, random.randint(0, 100))
+            cropped_and_resized = reize_to_required_size(frame[top:bottom,left:right].copy())
+            drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, predict_age(model, cropped_and_resized))
         
         # Write the modified frame to the output video file
         out.write(frame)
@@ -304,3 +315,12 @@ def process_video_thread(image_label, window, window_width, window_height):
     return
 
 
+def predict_age(model, face_image):
+    prediction = model.predict(np.expand_dims(face_image,axis=0), verbose = 0)
+    return prediction[0]
+
+
+def reize_to_required_size(face_image):
+    resized = cv2.resize(face_image, dsize=(200, 200), interpolation=cv2.INTER_CUBIC)
+    array = np.array(resized)
+    return array
