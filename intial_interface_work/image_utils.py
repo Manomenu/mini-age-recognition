@@ -42,7 +42,7 @@ def load_image(image_label, window, model):
             face_image=elo
        
         pil_image = Image.fromarray(face_image)
-        pil_image.thumbnail((max_width, max_height), Image.LANCZOS)
+        pil_image = pil_image.resize((max_width, max_height), Image.LANCZOS)
         tk_image = ImageTk.PhotoImage(pil_image)
 
         image_label.config(image=tk_image)
@@ -169,9 +169,12 @@ def open_camera2(image_label, vid, window, model):
 
             drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, predict_age(model, cropped_and_resized))
         
-        
+        max_height = window.winfo_height()
+        max_width = window.winfo_width()
+       
 
         pil_image = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+        pil_image = pil_image.resize((max_width, max_height), Image.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image)
 
         # Update the image_label with the new image

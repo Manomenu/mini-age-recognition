@@ -1,3 +1,6 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
@@ -7,15 +10,12 @@ import cv2
 import tensorflow as tf
 from tensorflow import keras
 
+
 def exit_program():
     window.destroy()
 
 def load_model():
-    print("test")
-    print(tf.version.VERSION)
-
     new_model = tf.keras.models.load_model("my_model.h5")
-    print(new_model.summary()) 
     return new_model
 
 age_prediction_model = load_model()
