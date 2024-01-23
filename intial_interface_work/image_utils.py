@@ -9,6 +9,7 @@ import cv2
 import random
 import time
 import numpy as np
+from edge_filter import apply_edge_filter, filterer
 
 is_update_frame_running = False
 
@@ -316,6 +317,7 @@ def process_video_thread(image_label, window, window_width, window_height, model
 
 
 def predict_age(model, face_image):
+    face_image = filterer.filter_data(face_image)
     prediction = model.predict(np.expand_dims(face_image,axis=0), verbose = 0)
     return prediction[0]
 
