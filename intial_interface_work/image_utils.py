@@ -50,34 +50,50 @@ def load_image(image_label, window, model):
        
     return 
 
-def load_folder(model):
+def load_folder(model, window):
     folder_path = filedialog.askdirectory()  # Open a directory dialog to choose a folder
     if folder_path:
-        result_folder = os.path.join(folder_path, 'result')
-        image_files = [file for file in os.listdir(folder_path) if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
+        folder_thread = threading.Thread(target=process_folder_thread, args=(model, window, folder_path))
+        folder_thread.start()
 
-        for image_file in image_files:
-            image_path = os.path.join(folder_path, image_file)
-            # original_image = Image.open(image_path)
-            # image = ImageTk.PhotoImage(original_image)
+def process_folder_thread(model, window, folder_path):
+    result_folder = os.path.join(folder_path, 'result')
+    image_files = [file for file in os.listdir(folder_path) if file.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
 
-            face_rec_image = face_recognition.load_image_file(image_path)
-            face_locations = face_recognition.face_locations(face_rec_image)
-            if face_locations:
-                for face_location in face_locations:
-                    top, right, bottom, left = face_location 
-                    face_image = face_rec_image[:, :]
+    images_count = len(image_files)  
+    processed_images = 0
+    progress_label = tk.Label(window, text="Processing folder", font=('Helvetica', 12))
+    progress_label.pack(pady=10)
 
-                    cropped_and_resized = reize_to_required_size(face_rec_image[top:bottom,left:right].copy())
+    progress_bar = ttk.Progressbar(window, length=300, mode='indeterminate')
+    progress_bar.place(relx=0.5, rely=0.5, anchor=tk.CENTER)  # Center the progress bar
+    progress_bar.start()
+    window.update()
 
-                    drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, predict_age(model, cropped_and_resized))
-            
+    for image_file in image_files:
+        image_path = os.path.join(folder_path, image_file)
+        # original_image = Image.open(image_path)
+        # image = ImageTk.PhotoImage(original_image)
 
-            os.makedirs(result_folder, exist_ok=True)
-            pil_image = Image.fromarray(face_rec_image)
-            result_image_path = os.path.join(result_folder, f"result_{image_file}")
-            pil_image.save(result_image_path, quality=95)
+        face_rec_image = face_recognition.load_image_file(image_path)
+        face_locations = face_recognition.face_locations(face_rec_image)
+        if face_locations:
+            for face_location in face_locations:
+                top, right, bottom, left = face_location 
+                face_image = face_rec_image[:, :]
 
+                cropped_and_resized = reize_to_required_size(face_rec_image[top:bottom,left:right].copy())
+
+                drawBoundingBoxWithAgeEstimate(face_image, left, top, bottom, right, predict_age(model, cropped_and_resized))
+
+        os.makedirs(result_folder, exist_ok=True)
+        pil_image = Image.fromarray(face_rec_image)
+        result_image_path = os.path.join(result_folder, f"result_{image_file}")
+        pil_image.save(result_image_path, quality=95)
+
+    progress_bar.stop()
+    progress_bar.destroy()
+    progress_label.destroy()
 
 # pierwsza 
 
@@ -147,14 +163,9 @@ def open_camera2(image_label, vid, window, model):
             image_label.after(10, update_frame)
             return
         frame = cv2.flip(frame, 1)
-        # Only process every other frame of video to save time
         if process_this_frame:
-           # Resize frame for faster processing
            small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-           # Convert BGR to RGB
            rgb_small_frame = small_frame[:, :, ::-1]
-            
-          #  Find all the faces and face encodings
            face_locations = face_recognition.face_locations(rgb_small_frame)
             
         process_this_frame = not process_this_frame
@@ -166,7 +177,6 @@ def open_camera2(image_label, vid, window, model):
             left *= 4
 
             cropped_and_resized = reize_to_required_size(frame[top:bottom,left:right].copy())
-
             drawBoundingBoxWithAgeEstimate(frame, left, top, bottom, right, predict_age(model, cropped_and_resized))
         
         max_height = window.winfo_height()
@@ -177,11 +187,9 @@ def open_camera2(image_label, vid, window, model):
         pil_image = pil_image.resize((max_width, max_height), Image.LANCZOS)
         photo_image = ImageTk.PhotoImage(pil_image)
 
-        # Update the image_label with the new image
         image_label.photo_image = photo_image
         image_label.configure(image=photo_image)
 
-        # Repeat after an interval to capture the next frame
         image_label.after(10, update_frame)
 
     update_frame()

@@ -15,7 +15,7 @@ def exit_program():
     window.destroy()
 
 def load_model():
-    new_model = tf.keras.models.load_model("my_model.h5")
+    new_model = tf.keras.models.load_model("model.h5")
     return new_model
 
 age_prediction_model = load_model()
@@ -41,7 +41,7 @@ canvas_frame.pack(fill=tk.BOTH, expand=True)
 
 file_menu = tk.Menu(menu_bar, tearoff=0)
 file_menu.add_command(label="Image file", command=lambda: load_image(image_label, window, age_prediction_model))
-file_menu.add_command(label="Folder", command=lambda: load_folder(age_prediction_model))
+file_menu.add_command(label="Folder", command=lambda: load_folder(age_prediction_model, window))
 file_menu.add_command(label="Camera", command=lambda:toggle_camera(image_label,vid, window, age_prediction_model))
 file_menu.add_command(label="Video", command=lambda:load_video(image_label, window, 1000, 600, age_prediction_model))
 menu_bar.add_cascade(label="Menu", menu=file_menu)
